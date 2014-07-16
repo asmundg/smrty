@@ -1,3 +1,4 @@
+(require hy.contrib.loop)
 (import re)
 (import socket)
 (import string)
@@ -24,28 +25,25 @@
 (defn single-packet [sock]
   (let [[header (sock.recv 2 socket.MSG_WAITALL)]
         [length (strlen header)]]
-    ((.
+    (.decode
      (if (< length 128)
-       (+ (get header 1) (sock.recv (- length 1)))
-       (sock.recv length))
-     decode) "utf-8")))
+       (+ (get header 1) (sock.recv (- length 1) socket.MSG_WAITALL))
+       (sock.recv length socket.MSG_WAITALL))
+     "utf-8")))
 
 (defn all-packets [sock]
   (while True
     (yield (single-packet sock))))
 
 (defn payload [sock]
-  (string.join
-   (take-while (fn [data] (none? (re.search "\[Lock=[a-f0-9]+\]" data)))
-               (all-packets sock))
-   "\n"))
+  (list (take-while (fn [data] (none? (re.search "\[Lock=[a-f0-9]+\]" data)))
+                    (all-packets sock))))
 
 (defn init-comm [sock header]
   (sock.send header)
   (let [[response (sock.recv 1024)]]
     (if-not (= response header)
             (throw (Exception ("Header mismatch {}".format (list response)))))))
-
 
 (defn config [address]
   (let [[sock (socket.socket socket.AF_INET socket.SOCK_STREAM)]]
@@ -54,5 +52,25 @@
     (sock.recv 1024)
     (payload sock)))
 
-(print (controller))
-(print (config (controller)))
+(defn functions [conf]
+  (loop [[c conf] [funcs []]]
+        (if (empty? c)
+          (list (reversed funcs))
+          (if (.startswith (car c) "FxType")
+            (recur (cdr c) (cons (func c) funcs))
+            (recur (cdr c) funcs)))))
+
+(defn func [conf]
+  (let [[config-string (-> (slice conf 0 (.index conf "FxEnd")) (string.join  "\n"))]]
+    (print config-string)
+    (Func
+     (-> (re.search "FxId=(.*)" config-string re.MULTILINE) (.group (int 1)))
+     (-> (re.search "FxType=(.*)" config-string re.MULTILINE) (.group (int 1)))
+     (-> (re.search "FxName=(.*)" config-string re.MULTILINE) (.group (int 1))))))
+
+(defclass Func []
+  [[--init-- (fn [self id type name]
+              (setv self.id id)
+              (setv self.type type)
+              (setv self.name name)
+              None)]])
