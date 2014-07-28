@@ -53,20 +53,41 @@
     (payload sock)))
 
 (defn functions [conf]
-  (loop [[c conf] [funcs []]]
-        (if (empty? c)
-          (list (reversed funcs))
-          (if (.startswith (car c) "FxType")
-            (recur (cdr c) (cons (func c) funcs))
-            (recur (cdr c) funcs)))))
+  (dict-comp (get f "id") f
+             [f (list-comp (func f)
+                           [f (function-sections conf)])]))
 
-(defn func [conf]
-  (let [[config-string (-> (slice conf 0 (.index conf "FxEnd")) (string.join  "\n"))]]
-    (print config-string)
-    (Func
-     (-> (re.search "FxId=(.*)" config-string re.MULTILINE) (.group (int 1)))
-     (-> (re.search "FxType=(.*)" config-string re.MULTILINE) (.group (int 1)))
-     (-> (re.search "FxName=(.*)" config-string re.MULTILINE) (.group (int 1))))))
+(defn function-sections [conf]
+  "Given a CG config list, return a list of config sections, each
+   containing a Fx description
+
+   [\"foo\" \"FxType=Fx_AnaLink_Lux\" \"FxName=Foo\"\"FxEnd\"]
+   =>
+   [\"FxType=Fx_AnaLink_Lux\nFxName=Foo\"]"
+  (loop
+   [[c conf] [funcs []]]
+   (if (empty? c)
+     (list (reversed funcs))
+     (if (.startswith (car c) "FxType")
+       (recur (cdr c) (cons (function-section c) funcs))
+       (recur (cdr c) funcs)))))
+
+(defn function-section [conf]
+  "Given a CG config list, return a newline-joined string from the first
+   element up to the corresponding FxEnd, exclusive
+
+   [\"FxType=Fx_AnaLink_Lux\" \"FxName=Foo\"\"FxEnd\"]
+   =>
+   \"FxType=Fx_AnaLink_Lux\nFxName=Foo\""
+  (-> (slice conf
+             0
+             (.index conf "FxEnd"))
+      (string.join "\n")))
+
+(defn func [fxstring]
+  {"id" (-> (re.search "FxId=(.*)" fxstring re.MULTILINE) (.group (int 1)))
+   "type" (-> (re.search "FxType=(.*)" fxstring re.MULTILINE) (.group (int 1)))
+   "name" (-> (re.search "FxName=(.*)" fxstring re.MULTILINE) (.group (int 1)))})
 
 (defclass Func []
   [[--init-- (fn [self id type name]
