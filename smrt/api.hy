@@ -35,7 +35,7 @@
   (while True
     (yield (single-packet sock))))
 
-(defn payload [sock]
+(defn config-payload [sock]
   (list (take-while (fn [data] (none? (re.search "\[Lock=[a-f0-9]+\]" data)))
                     (all-packets sock))))
 
@@ -50,7 +50,13 @@
     (sock.connect address)
     (init-comm sock "\x46\x00\x00\x00")
     (sock.recv 1024)
-    (payload sock)))
+    (config-payload sock)))
+
+(defn function-status [address]
+  (let [[sock (socket.socket socket.AF_INET socket.SOCK_STREAM)]]
+    (sock.connect address)
+    (init-comm sock "\x35\x00\x00\x00")
+    (single-packet sock)))
 
 (defn functions [conf]
   (dict-comp (get f "id") f
