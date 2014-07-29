@@ -39,24 +39,32 @@
   (list (take-while (fn [data] (none? (re.search "\[Lock=[a-f0-9]+\]" data)))
                     (all-packets sock))))
 
+(defn connected-socket [address]
+  (let [[sock (socket.socket socket.AF_INET socket.SOCK_STREAM)]]
+    (sock.connect address)
+    sock))
+
 (defn init-comm [sock header]
   (sock.send header)
   (let [[response (sock.recv 1024)]]
     (if-not (= response header)
             (throw (Exception ("Header mismatch {}".format (list response)))))))
 
-(defn config [address]
-  (let [[sock (socket.socket socket.AF_INET socket.SOCK_STREAM)]]
-    (sock.connect address)
+(defn config [sock address]
     (init-comm sock "\x46\x00\x00\x00")
     (sock.recv 1024)
-    (config-payload sock)))
+    (config-payload sock))
 
-(defn function-status [address]
-  (let [[sock (socket.socket socket.AF_INET socket.SOCK_STREAM)]]
-    (sock.connect address)
+(defn function-status [sock address]
     (init-comm sock "\x35\x00\x00\x00")
-    (single-packet sock)))
+    (single-packet sock))
+
+(defn human-readable-function-status [status functions]
+  (list-comp
+   [(get (->> (get f 0) (get functions)) "name") (get f -1)]
+   [f (list-comp
+       (f.split ",")
+       [f (-> (status.rstrip ";") (.split ";"))])]))
 
 (defn functions [conf]
   (dict-comp (get f "id") f
