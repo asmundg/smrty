@@ -8,7 +8,7 @@
   (list (take-while (fn [data] (none? (re.search "\[Lock=[a-f0-9]+\]" data)))
                     (comm.all-packets sock))))
 
-(defn config [sock address]
+(defn config [sock]
     (comm.init-comm sock "\x46\x00\x00\x00")
     (sock.recv 1024)
     (config-payload sock))
@@ -49,3 +49,13 @@
   {"id" (-> (re.search "FxId=(.*)" fxstring re.MULTILINE) (.group (int 1)))
    "type" (-> (re.search "FxType=(.*)" fxstring re.MULTILINE) (.group (int 1)))
    "name" (-> (re.search "FxName=(.*)" fxstring re.MULTILINE) (.group (int 1)))})
+
+
+(defn function-id-from-name [name functions]
+  (loop
+   [[funcs (functions.values)]]
+   (if (empty? funcs)
+     null
+     (if (= (get (car funcs) "name") name)
+       (get (car funcs) "id")
+       (recur (cdr funcs))))))
