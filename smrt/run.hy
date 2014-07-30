@@ -1,11 +1,11 @@
 (import pprint)
-(import [smrt [api]])
+(import [smrt [config comm status]])
 
-(print (api.controller))
-(let [[controller (api.controller)]
-      [sock (api.connected-socket controller)]
-      [functions (api.functions (api.config sock controller))]
-      [status (api.function-status sock controller)]]
-  (pprint.pprint (api.human-readable-function-status
-                  status
+(print (comm.controller))
+(let [[controller (comm.controller)]
+      [sock (comm.connected-socket controller)]
+      [functions (config.functions (config.config sock controller))]
+      [stats (status.function-status sock controller)]]
+  (pprint.pprint (status.human-readable-function-status
+                  stats
                   functions)))

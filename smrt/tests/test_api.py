@@ -1,5 +1,5 @@
-import hy  # qa
-from smrt import api
+import hy  # noqa
+from smrt import config, status
 
 fx = ['[FX CONFIG]',
       'FxType=Fx_Dimmer',
@@ -43,14 +43,14 @@ fx = ['[FX CONFIG]',
 
 
 def test_functions():
-    assert api.functions(fx) == {
+    assert config.functions(fx) == {
         '8': dict(name='Test Dimmer', type='Fx_Dimmer', id='8'),
         '9': dict(name='Test Dimmer #2', type='Fx_Dimmer', id='9')}
 
 
 def test_human_readable_function_status():
     assert (
-        api.human_readable_function_status(
+        status.human_readable_function_status(
             '8,0,0,1;9,0,0,0;',
             {'8': dict(name='foo'), '9': dict(name='bar')})
         == [['foo', '1'], ['bar', '0']])
