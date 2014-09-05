@@ -25,19 +25,19 @@
 (defn controller []
   (nth (controllers) 0))
 
-(defn strlen [header]
-  (if (< (ord (get header 1)) 9)
-    (+ (ord (get header 0)) (* (- (ord (get header 1)) 1) 128))
-    (ord (get header 0))))
+(defn packet-length [header]
+  (if (= (ord (get header 0)) 128)
+    130
+    (if (< (ord (get header 1)) 9)
+      (+ (ord (get header 0)) (* (- (ord (get header 1)) 1) 128))
+      (ord (get header 0)))))
 
 (defn single-packet [sock]
   (let [[header (sock.recv 2 socket.MSG_WAITALL)]
-        [length (strlen header)]]
-    (.decode
-     (if (< length 128)
-       (+ (get header 1) (sock.recv (- length 1) socket.MSG_WAITALL))
-       (sock.recv length socket.MSG_WAITALL))
-     "utf-8")))
+        [length (packet-length header)]]
+    (if (< length 128)
+      (+ (get header 1) (sock.recv (- length 1) socket.MSG_WAITALL))
+      (sock.recv length socket.MSG_WAITALL))))
 
 (defn all-packets [sock]
   (while True

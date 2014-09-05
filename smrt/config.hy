@@ -5,8 +5,9 @@
 (import [smrt [comm]])
 
 (defn config-payload [sock]
-  (list (take-while (fn [data] (none? (re.search "\[Lock=[a-f0-9]+\]" data)))
-                    (comm.all-packets sock))))
+  (list-comp (.decode n "latin-1")
+             [n (take-while (fn [data] (none? (re.search "\[Lock=[a-f0-9]+\]" data)))
+                            (comm.all-packets sock))]))
 
 (defn config [sock]
     (comm.init-comm sock "\x46\x00\x00\x00")
