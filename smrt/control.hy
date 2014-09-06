@@ -3,13 +3,13 @@
 (import requests)
 (import [smrt [status]])
 
-(defn light-on [address sock id]
-  (if (= (status.function-status sock id) "0")
-    (requests.get (.format "http://{}/check.asp?q={}||light.asp" (get address 0) id))
+(defn light-on [address sock func function-map]
+  (if (= (get (status.all-function-status sock function-map) func) "0")
+    (requests.get (.format "http://{}/check.asp?q={}||light.asp" (get address 0) (get function-map func)))
     null))
 
-(defn light-off [address sock id]
-  (if (= (status.function-status sock id) "1")
-    (requests.get (.format "http://{}/check.asp?q={}||light.asp" (get address 0) id))
+(defn light-off [address sock func function-map]
+  (if (= (get (status.all-function-status sock function-map) func) "1")
+    (requests.get (.format "http://{}/check.asp?q={}||light.asp" (get address 0) (get function-map func)))
     null))
 

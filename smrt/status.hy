@@ -1,13 +1,20 @@
 (import [smrt [comm]])
 
-(defn all-function-status [sock]
+(defn invert [map]
+  (dict-comp (get map key) key [key map]))
+
+(defn all-function-status [sock function-map]
+  """
+   function map is a {name id} mapping
+  """
+  (let [[id-to-func (invert function-map)]]
     (comm.init-comm sock "\x35\x00\x00\x00")
     (let [[status (comm.single-packet sock)]]
       (dict-comp
-       (get f 0) (get f -1)
+       (get id-to-func (get f 0)) (get f -1)
        [f (list-comp
            (f.split ",")
-           [f (-> (status.rstrip ";") (.split ";"))])])))
+           [f (-> (status.rstrip ";") (.split ";"))])]))))
 
 (defn all-analink-status [sock]
   (comm.init-comm sock "\x34\x00\x00\x00")

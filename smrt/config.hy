@@ -15,7 +15,7 @@
     (config-payload sock))
 
 (defn functions [conf]
-  (dict-comp (get f "id") f
+  (dict-comp (get f "name") (get f "id")
              [f (list-comp (func f)
                            [f (function-sections conf)])]))
 

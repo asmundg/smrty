@@ -1,0 +1,5 @@
+- name: 1. etg Gang - Dimmer
+  dim: 100
+  triggers:
+    - name: Gang PIR
+      until: 30
